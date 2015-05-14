@@ -1,6 +1,7 @@
-#import asyncio as tulip
+import asyncio as tulip
 import pygame
 import random
+from functools import partial
 
 SIZE = 800, 600
 CHAR_SIZE=  64, 64
@@ -13,7 +14,7 @@ class GameOver(BaseException):
 def init():
     global SCREEN, LOOP
     SCREEN = pygame.display.set_mode(SIZE)
-    #LOOP = tulip.get_event_loop()
+    LOOP = tulip.get_event_loop()
     return SCREEN
 
 class Object(pygame.sprite.Sprite):
@@ -59,20 +60,29 @@ def create_object():
     color = random.choice((BLUE, YELLOW, RED, GREEN, WHITE))
     return Object(pos=pos, move_function=direction, color=color)
 
-def main():
-    main_group = pygame.sprite.OrderedUpdates()
-    main_group.add(Object(pos=(0, 300), move_function=move1))
+@tulip.coroutine
+def main_loop(main_group):
     while True:
         if random.random()<0.2:
             main_group.add(create_object())
         pygame.event.pump()
         if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+            break
             raise GameOver
         main_group.clear(SCREEN, clear_callback)
         main_group.update()
         main_group.draw(SCREEN)
         pygame.display.flip()
-        pygame.time.delay(30)
+        #pygame.time.delay(30)
+        yield from tulip.sleep(0.03)
+
+def main():
+    main_group = pygame.sprite.OrderedUpdates()
+    main_group.add(Object(pos=(0, 300), move_function=move1))
+
+    task = tulip.Task(main_loop(main_group))
+
+    LOOP.run_until_complete(task)
 
 
 if __name__ == "__main__":
@@ -80,4 +90,5 @@ if __name__ == "__main__":
     try:
         main()
     finally:
+        LOOP.stop()
         pygame.quit()
