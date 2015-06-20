@@ -68,7 +68,6 @@ def main_loop(main_group):
         pygame.event.pump()
         if pygame.key.get_pressed()[pygame.K_ESCAPE]:
             break
-            raise GameOver
         main_group.clear(SCREEN, clear_callback)
         main_group.update()
         main_group.draw(SCREEN)
